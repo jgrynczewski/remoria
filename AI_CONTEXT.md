@@ -70,3 +70,44 @@ This document captures general, technology-agnostic principles for building and 
 - Security: inputs validated, permissions enforced, secrets handled correctly.
 - Documentation updated (user-facing and developer docs as applicable).
 
+
+## Project Decisions (live summary)
+
+### Platform and Region
+- Track A (AWS-first, serverless) selected. Single-cloud simplicity; room to add Cloudflare/GCP later if CDN economics dominate.
+- Primary region: `eu-central-1` (Frankfurt). Global delivery via CloudFront.
+
+### Storage, Delivery, and Access
+- S3 buckets:
+  - `assets-raw` (private, versioned, SSE-KMS): originals; lifecycle → Glacier (long-term).
+  - `assets-derivatives` (private by default, versioned, SSE-KMS): thumbnails/previews/transcodes; lifecycle → IA.
+- CDN: CloudFront in front of `assets-derivatives` with OAC; access via CloudFront/S3 signed URLs.
+- Uploads: S3 pre-signed URLs (multipart for large files). App does not proxy media streams.
+- Access model: default private; per-object sharing to users/groups at app layer (DB ACLs). Soft-delete + purge; retention ≥ 5 years.
+
+### Backend Application
+- Framework: Django 5 + DRF; API-first with JWT auth (email/password self-signup via email link).
+- DB: PostgreSQL (start Single-AZ `db.t4g.micro`; plan Multi-AZ upgrade). RDS Proxy when on AWS.
+- Object storage integration: `boto3` pre-signed URLs.
+- Background processing (later): EventBridge + SQS + Lambda; MediaConvert for video transcodes (optional at MVP).
+
+### Initial Domain Model and API (MVP)
+- Models: `Asset` (owner, bucket, key, size, content_type, checksum, metadata JSON, retention_until, soft_deleted_at), `Share` (subject user/group, permission, expires_at). Groups optional initially.
+- Endpoints:
+  - Auth: POST `/auth/login`, POST `/auth/register` (email link flow for self-signup)
+  - Assets: POST `/assets/upload-initiate`, POST `/assets` (finalize), GET `/assets/{id}`, GET `/assets/{id}/download`, DELETE `/assets/{id}` (soft-delete)
+  - Sharing: POST `/assets/{id}/share`, DELETE `/assets/{id}/share/{share_id}`
+
+### Tooling
+- Lint/format: Ruff; Types: mypy (Bandit optional later). CI: `ruff format --check`, `ruff check`, `mypy` on every PR.
+- Dependency management: `uv` with `pyproject.toml` and committed `uv.lock`. Common commands: `uv sync`, `uv add`, `uv add --group dev`, `uv run ...`, `uv lock --upgrade`.
+
+### Cost Posture (low usage)
+- With ~20 GB in S3 and minimal traffic: total ~15–25 USD/month (RDS Single-AZ dominates). Pay-as-you-go for storage/egress; no pre-declared quotas.
+
+### Open Items to Revisit
+- Derivative profiles (image sizes, document previews, video renditions/HLS).
+- When to enable moderation (malware/unsafe content) and which signals.
+- Upgrade DB to Multi-AZ and consider Cognito/SSO if needed.
+- CDN strategy review if egress grows (Cloudflare+GCP hybrid track).
+
