@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     # API
     'rest_framework',
     'rest_framework_simplejwt',
+    # Apps
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -134,3 +136,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
 }
+EMAIL_BACKEND = os.getenv("DJANGO_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+DEFAULT_FROM_EMAIL = os.getenv("DJANGO_DEFAULT_FROM_EMAIL", "no-reply@remoria")
+ACTIVATION_URL_BASE = os.getenv("ACTIVATION_URL_BASE", "http://localhost:8000/activate")
