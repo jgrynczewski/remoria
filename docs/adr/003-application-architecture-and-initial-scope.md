@@ -1,15 +1,15 @@
 # ADR-003: Application architecture and initial scope
 
-- Status: proposed
+- Status: accepted
 - Date: 2025-08-09
 
 ## Context
 We will implement the core application first, then wire the cloud infrastructure. The app manages multimedia assets with default-private visibility, per-user/group sharing, and long-term retention. Initial usage is small, but we should not block future scaling.
 
 ## Decision (proposed)
-Backend stack:
+Backend stack (accepted):
 - Framework: Django 5 + Django REST Framework (DRF)
-- Auth: Django auth (email/password), JWT tokens for API
+- Auth: Django auth (email/password) with self-signup via email link; JWT tokens for API
 - DB: PostgreSQL
 - Object storage integration: S3-compatible via `boto3` (pre-signed URLs)
 - Config: `.env` + 12-factor style settings
