@@ -1,0 +1,51 @@
+[project]
+name = "remoria"
+version = "0.1.0"
+description = "Remoria backend for storing and sharing multimedia assets"
+authors = [{ name = "Remoria" }]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "django>=5.0,<6.0",
+  "djangorestframework>=3.15,<4.0",
+  "djangorestframework-simplejwt>=5.3,<6.0",
+  "boto3>=1.34,<2.0",
+  "psycopg[binary]>=3.2,<4.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+  "ruff>=0.5.0",
+  "mypy>=1.10.0",
+  "pytest>=8.2.0",
+  "pytest-django>=4.8.0",
+  "django-stubs[compatible-mypy]>=5.0.0",
+  "djangorestframework-stubs>=3.15.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+select = ["E", "F", "I", "UP", "B", "W"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["remoria"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+disallow_any_generics = true
+ignore_missing_imports = true
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "remoria.settings"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["remoria"]
